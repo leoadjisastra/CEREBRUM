@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Node
+node_modules/
+
+# Environment
+.env
+.env.*
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/settings.json
+
+# Docker
+*.pid
+
+# Secrets
+secrets/
+wallets/
+private_keys/
+
+# Storage
+storage/*
+!storage/.gitkeep
+
+# Models
+models/
+
+# Data
+datasets/
+
+# Temporary
+tmp/
+cache/
