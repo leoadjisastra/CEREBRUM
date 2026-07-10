@@ -1,120 +1,144 @@
-cat > docs/adr/001-sqlite-before-postgres.md << 'EOF'
-# ADR-001: SQLite Before Postgres
+# ADR-001: Workspace Layout
 
 ## Status
 Accepted
 
 ## Date
-2026-07-09
+2026-07-10
 
 ## Context
-CEREBRUM butuh database buat nyimpen state agent, log trading, dan data
-operasional lainnya. The current reference deployment provides limited
-compute resources. The architecture intentionally optimizes for constrained
-environments first, while preserving a migration path toward larger
-deployments.
+CEREBRUM dirancang sebagai AI Engineering Platform yang akan berkembang secara
+bertahap menjadi platform modular untuk AI Agents, Blockchain, Quant Trading,
+Automation, dan Knowledge Management.
 
-Postgres itu solid buat production, tapi punya overhead: proses server
-terpisah, connection pooling, minimal footprint idle RAM, plus butuh
-container sendiri di Docker Compose.
+Repository diperkirakan akan terus bertambah selama bertahun-tahun. Tanpa
+workspace yang memiliki batas tanggung jawab jelas sejak awal, repository akan
+mengalami:
+- Struktur yang tidak konsisten.
+- Dokumentasi sulit ditemukan.
+- Kode reusable tersebar di berbagai lokasi.
+- Refactor besar ketika project bertambah.
+- Developer maupun AI coding agent kesulitan memahami organisasi repository.
+
+Karena itu struktur workspace diputuskan terlebih dahulu sebelum implementasi
+fitur dimulai.
 
 ## Decision Drivers
-Priority order:
-1. Simplicity
-2. Low memory usage
-3. Fast development
-4. Easy maintenance
-5. Scalability later
+Prioritas keputusan ini adalah:
+1. Konsistensi repository.
+2. Separation of Concerns.
+3. Kemudahan navigasi.
+4. Skalabilitas jangka panjang.
+5. Kemudahan onboarding developer maupun AI agent.
+6. Refactor seminimal mungkin.
 
 ## Alternatives Considered
 
-### PostgreSQL
+### Flat Repository
+Semua file berada di root repository.
+
 Pros:
-- Mature
-- Excellent concurrency
-- Rich ecosystem
+- Sangat sederhana.
+- Cepat dibuat.
 
 Cons:
-- Extra container
-- Higher idle RAM usage
-- Operational complexity not justified yet
+- Sulit dipelihara.
+- Cepat berantakan.
 
-Decision: Rejected for the current stage.
+Rejected.
 
-### DuckDB
+### Multiple Repositories
+Setiap project memiliki repository sendiri.
+
 Pros:
-- Excellent analytical performance
-- Great for local analytics
+- Isolasi project sangat jelas.
 
 Cons:
-- Not designed as an operational database
-- Weak fit for agent state management
+- Sulit berbagi library internal.
+- Dokumentasi terpecah.
+- Sulit melakukan perubahan lintas project.
 
-Decision: Rejected.
+Rejected pada tahap awal.
+
+### Modular Monorepo
+Pros:
+- Dokumentasi terpusat.
+- Shared resource mudah digunakan ulang.
+- Cocok untuk platform AI engineering.
+
+Cons:
+- Struktur awal terlihat lebih besar.
+
+Accepted.
 
 ## Decision
-Pakai **SQLite** sebagai database default di awal, bukan Postgres.
+CEREBRUM menggunakan pendekatan **modular monorepo**.
 
-Alasan:
-1. **Zero overhead** — SQLite adalah file, bukan server. Gak ada proses
-   tambahan yang makan RAM 24/7.
-2. **Cukup buat skala saat ini** — CEREBRUM masih single-user, single-machine.
-   Concurrent write yang jadi kelemahan SQLite belum relevan di skala ini.
-3. **Setup instan** — gak perlu container, gak perlu migration tooling berat,
-   gak perlu network config antar service.
-4. **Sejalan dengan Engineering Philosophy #4 & #6** — scale only after
-   bottlenecks are measured, infrastructure follows project maturity.
+Workspace dibagi berdasarkan area tanggung jawab tingkat tinggi, seperti:
+- Documentation
+- Infrastructure
+- Source Code
+- Shared Resources
+- Storage
+- Automation
+- Testing
+
+Detail struktur masing-masing area dijelaskan pada ADR tersendiri.
 
 ## Scope
-This decision applies to:
-- Agent state
-- Metadata
-- Task queue metadata
-- Audit logs
-- Trading logs
+ADR ini hanya mengatur filosofi dan organisasi workspace.
 
-This decision does NOT apply to:
-- Embeddings
-- Large datasets
-- Model files
-- Market history archives
+ADR ini **tidak** menentukan:
+- Struktur folder internal.
+- Docker.
+- Database.
+- Bahasa pemrograman.
+- Agent architecture.
+- Deployment.
+
+Semua keputusan tersebut dibuat pada ADR terpisah.
 
 ## Migration Strategy
-Migration to PostgreSQL should require minimal application changes.
-To achieve this:
-- Access database through a repository/data-access layer.
-- Avoid SQLite-specific SQL features.
-- Keep schema portable.
-- Version schema migrations.
+Workspace dapat berkembang mengikuti kebutuhan project.
+
+Perubahan besar terhadap struktur workspace harus:
+- Memiliki alasan yang jelas.
+- Menghindari duplikasi.
+- Didokumentasikan melalui ADR baru atau revisi ADR ini.
 
 ## When to Revisit
-Pindah ke Postgres kalau salah satu ini kejadian (bukan asumsi, tapi terukur):
-- Butuh concurrent write dari banyak agent/service secara bersamaan
-- Butuh fitur relasional lanjutan (row-level locking, replication)
-- Ukuran database mulai bikin query lambat meskipun udah di-index
-- Deployment pindah ke multi-instance/multi-server
+ADR ini dievaluasi apabila:
+- Monorepo tidak lagi sesuai.
+- Repository menjadi terlalu besar.
+- Dibutuhkan pemisahan menjadi beberapa repository.
 
 ## Consequences
-- Migrasi ke Postgres nanti butuh effort (schema porting, query adjustment)
-  — tapi ini trade-off yang diterima demi kesederhanaan sekarang.
-- Semua service harus akses data lewat layer abstraksi (bukan raw SQLite
-  query tersebar), biar gampang di-swap ke Postgres nanti tanpa nulis ulang
-  logic tiap service.
+Positif:
+- Repository lebih mudah dipahami.
+- Struktur konsisten.
+- Dokumentasi lebih mudah ditemukan.
+- Refactor besar dapat diminimalkan.
+
+Negatif:
+- Jumlah folder terlihat lebih banyak pada tahap awal.
+- Sebagian folder masih kosong sampai milestone berikutnya.
+
+Trade-off ini diterima.
 
 ## Risks
-- Concurrent writes may become a bottleneck.
-- SQLite file corruption is possible after unexpected power loss.
-- Less suitable for distributed deployments.
+- Overengineering apabila struktur bertambah tanpa implementasi nyata.
+- Struktur menjadi usang apabila tidak dievaluasi secara berkala.
 
 ## Non Goals
-This ADR does not attempt to optimize:
-- HA (High Availability)
-- Replication
-- Horizontal scaling
-- Multi-region deployment
+ADR ini tidak menentukan:
+- Database.
+- Docker strategy.
+- AI model.
+- MCP architecture.
+- Deployment architecture.
 
 ## Related ADRs
 - ADR-002 Docker First
 - ADR-004 Agent Boundary
 - ADR-006 Repository Structure
-EOF
+- ARCHITECTURE.md

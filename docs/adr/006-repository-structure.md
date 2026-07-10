@@ -1,59 +1,125 @@
-# ADR-006: Repository Structure — services/ vs projects/ Separation
+# ADR-006: Repository Structure — Services vs Projects Separation
 
 ## Status
 Accepted
 
-## Context
-Seiring CEREBRUM berkembang, folder awal (`docs/`, `docker/`) sudah cukup,
-tapi belum ada tempat jelas buat:
-- Building block yang dipakai berkali-kali oleh banyak project (agents,
-  config, prompts, memory logic)
-- Aplikasi/produk nyata yang MENGGUNAKAN building block tersebut
-- Storage buat data, model, log, backup yang bakal membesar seiring waktu
-- Test suite yang terpisah dari kode fungsional
+## Date
+2026-07-10
 
-Tanpa struktur ini, ada risiko agent logic ke-duplikat di tiap project, atau
-config/prompt tersebar gak konsisten.
+## Context
+Setelah workspace utama ditetapkan (ADR-001), diperlukan aturan yang lebih
+spesifik mengenai organisasi source code di dalam repository.
+
+Tanpa aturan ini terdapat risiko:
+- Logic agent terduplikasi di banyak project.
+- Config dan prompt tersebar.
+- Sulit membedakan reusable component dengan aplikasi akhir.
+- Storage dan test bercampur dengan source code.
 
 ## Decision
-Repository dipecah jadi layer yang jelas peruntukannya:
+Repository dipisahkan menjadi area yang memiliki tanggung jawab jelas.
 
-- **`services/`** — building block reusable (microservice-style): research-agent,
-  analyst-agent, risk-manager, trader, execution, portfolio, notification.
-  Ini yang di-*consume*, bukan yang berdiri sendiri sebagai produk.
+### services/
+Building block reusable. Contoh: research-agent, analyst-agent, risk-manager,
+trader, execution, portfolio, notification. Service bukan aplikasi akhir,
+tetapi komponen yang digunakan oleh project lain.
 
-- **`projects/`** — aplikasi/produk nyata yang MENGGUNAKAN service-service di atas:
-  agentic-wallet, ai-agents, blockchain, mcp, quant-engine, sandbox.
+### projects/
+Produk atau aplikasi nyata yang menggunakan service. Contoh: agentic-wallet,
+ai-agents, blockchain, mcp, quant-engine, sandbox.
 
-- **`shared/`** — resource lintas-service: config, prompts, memory, utils,
-  schemas, types. Semua service baca dari sini, bukan hardcode masing-masing.
+### shared/
+Komponen lintas service. Contoh: config, prompts, memory, utils, schemas,
+types. Semua service membaca resource bersama dari sini.
 
-- **`storage/`** — data yang bakal membesar: datasets, embeddings, models,
-  logs, backups, artifacts. Dipisah dari kode biar gampang di-`.gitignore`
-  atau dipindah ke storage eksternal nanti.
+### storage/
+Penyimpanan data yang berkembang seiring waktu. Contoh: datasets, embeddings,
+models, logs, backups, artifacts. Dipisahkan dari source code agar mudah
+dipindahkan ke storage eksternal.
 
-- **`tests/`** — unit, integration, e2e. Dibuat dari awal walau kosong, biar
-  jadi kebiasaan nulis test seiring service bertambah.
+### tests/
+Seluruh test repository: unit, integration, e2e.
 
-- **`docs/runbooks/`** — panduan operasional darurat (deploy, backup, restore,
-  incident) yang harus bisa diakses cepat tanpa mikir ulang saat ada masalah.
+### docs/api
+Dokumentasi integrasi eksternal.
 
-- **`docs/api/`** — dokumentasi integrasi eksternal (Coinbase, TradingView,
-  Telegram, Discord) — penting karena MCP server akan terus bertambah.
+### docs/runbooks
+Panduan operasional: deploy, backup, restore, incident.
 
-- **`docs/diagrams/`** — semua diagram visual (PNG, drawio, mermaid), terpisah
-  dari teks ARCHITECTURE.md.
+### docs/diagrams
+Diagram visual: draw.io, mermaid, PNG, SVG.
 
-## What we explicitly did NOT add yet
-Kubernetes, Terraform, Ansible, Helm, Kafka, RabbitMQ, Airflow, Prometheus,
-Elasticsearch — semua ini infra "enterprise" yang belum ada kebutuhan nyata.
-Ditambahkan hanya kalau bottleneck terukur (lihat Engineering Philosophy #4
-dan #6 di ARCHITECTURE.md).
+## Alternatives Considered
+
+### Semua logic berada di dalam projects/
+Pros: awal lebih sederhana.
+Cons: logic mudah terduplikasi, sulit dipelihara.
+Rejected.
+
+### Shared library tanpa services/
+Pros: struktur lebih kecil.
+Cons: sulit membedakan reusable business logic dengan utility.
+Rejected.
+
+### Services + Shared + Projects
+Pros: separation of concerns, reusability tinggi, mudah berkembang menjadi
+multi-service.
+Accepted.
+
+## Scope
+ADR ini mengatur organisasi source code dan resource di dalam repository.
+
+Tidak mengatur:
+- Database.
+- Docker Compose.
+- Agent protocol.
+- Memory architecture.
+- Deployment.
+
+## Migration Strategy
+Folder baru hanya boleh ditambahkan apabila:
+- Memiliki tanggung jawab yang jelas.
+- Tidak menduplikasi folder yang sudah ada.
+- Dibutuhkan oleh implementasi nyata.
+
+## What We Explicitly Do Not Add Yet
+Belum menggunakan: Kubernetes, Terraform, Helm, Ansible, Kafka, RabbitMQ,
+Airflow, Prometheus, Elasticsearch. Komponen tersebut baru dipertimbangkan
+setelah terdapat bottleneck yang terukur.
+
+## When to Revisit
+ADR ini dievaluasi apabila:
+- Jumlah service meningkat drastis.
+- Repository berubah menjadi multi-repository.
+- Struktur saat ini mulai menghambat pengembangan.
 
 ## Consequences
-- Repo terlihat lebih besar dari fungsionalitas saat ini — trade-off yang
-  disengaja demi menghindari refactor besar-besaran nanti.
-- Developer (termasuk AI agent yang bantu coding) harus tau aturan: agent
-  logic reusable → `services/`, produk jadi → `projects/`.
-- Folder kosong tetap di-commit pakai `.gitkeep` biar struktur konsisten
-  meski isinya belum ada.
+Positif:
+- Reusable component lebih jelas.
+- Project lebih modular.
+- Refactor lebih kecil.
+- AI coding agent lebih mudah memahami struktur repository.
+
+Negatif:
+- Repository terlihat lebih besar pada tahap awal.
+- Beberapa folder kosong hingga milestone berikutnya.
+
+Trade-off ini diterima.
+
+## Risks
+- Struktur dapat menjadi terlalu kompleks apabila service dibuat tanpa kebutuhan.
+- Folder kosong dapat membingungkan apabila tidak segera diisi implementasi.
+
+## Non Goals
+ADR ini tidak menentukan:
+- Database.
+- Docker strategy.
+- Agent architecture.
+- Deployment.
+- AI model.
+
+## Related ADRs
+- ADR-001 Workspace Layout
+- ADR-002 Docker First
+- ADR-004 Agent Boundary
+- ARCHITECTURE.md
