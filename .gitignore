@@ -9,7 +9,8 @@ node_modules/
 
 # Environment
 .env
-.env.*
+.env.local
+.env.production
 
 # Logs
 *.log
@@ -29,15 +30,19 @@ secrets/
 wallets/
 private_keys/
 
-# Storage
-storage/*
-!storage/.gitkeep
-
-# Models
-models/
-
-# Data
-datasets/
+# Storage — ignore isi file besar, tapi keep struktur folder
+storage/datasets/*
+!storage/datasets/.gitkeep
+storage/embeddings/*
+!storage/embeddings/.gitkeep
+storage/models/*
+!storage/models/.gitkeep
+storage/logs/*
+!storage/logs/.gitkeep
+storage/backups/*
+!storage/backups/.gitkeep
+storage/artifacts/*
+!storage/artifacts/.gitkeep
 
 # Temporary
 tmp/
