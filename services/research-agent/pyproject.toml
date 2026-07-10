@@ -1,0 +1,15 @@
+[project]
+name = "research-agent"
+version = "0.1.0"
+description = "CEREBRUM Research Agent service"
+requires-python = ">=3.10"
+dependencies = [
+    "anthropic>=0.39.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0.0"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
