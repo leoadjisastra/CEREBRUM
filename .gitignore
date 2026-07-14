@@ -1,6 +1,9 @@
 # Python
 __pycache__/
-*.pyc
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
 .venv/
 venv/
 
@@ -9,8 +12,12 @@ node_modules/
 
 # Environment
 .env
-.env.local
-.env.production
+.env.*
+!.env.example
+
+# Database
+*.db
+*.sqlite
 
 # Logs
 *.log
@@ -20,7 +27,8 @@ node_modules/
 Thumbs.db
 
 # IDE
-.vscode/settings.json
+.vscode/
+.idea/
 
 # Docker
 *.pid
