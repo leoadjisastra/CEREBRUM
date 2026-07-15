@@ -22,6 +22,4 @@ class AnthropicProvider(LLMProvider):
         except Exception as e:
             raise ProviderError(f"Anthropic API call failed: {e}") from e
 
-        return "".join(
-            block.text for block in response.content if hasattr(block, "text")
-        )
+        return "".join(block.text for block in response.content if hasattr(block, "text"))

@@ -1,10 +1,7 @@
-.PHONY: bootstrap dev clean
+.PHONY: test lint format type run
 
-bootstrap:
-	bash scripts/bootstrap.sh
+test:
+	pytest
 
-dev:
-	bash scripts/dev.sh
-
-clean:
-	bash scripts/clean.sh
+lint:
+	ruff check 
