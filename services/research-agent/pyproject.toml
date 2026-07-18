@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "research-agent"
 version = "0.1.0"
@@ -33,4 +37,21 @@ indent-style = "space"
 [dependency-groups]
 dev = [
     "pre-commit>=4.6.0",
+    "pytest-cov>=7.1.0",
+]
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*",
+    "*/__init__.py",
+    "*/main.py",
+]
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
 ]

@@ -8,7 +8,7 @@ from .base import ResearchRepository
 
 class SQLiteRepository(ResearchRepository):
     def __init__(self, db_path: Path):
-        self.db_path = db_path
+        self.db_path = Path(db_path)
         self._init_db()
 
     def _init_db(self) -> None:
