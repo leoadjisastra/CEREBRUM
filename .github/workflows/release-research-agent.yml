@@ -1,0 +1,83 @@
+name: Release Research Agent
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "services/research-agent/**"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/research-agent
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Setup Python
+        run: uv python install
+
+      - name: Install dependencies
+        run: uv sync --all-extras --dev
+
+      - name: Run tests with coverage
+        run: uv run pytest --cov --cov-report=xml --cov-fail-under=85
+
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-release-${{ github.ref_name }}
+      cancel-in-progress: false
+
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository on release branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Force branch to workflow sha
+        run: git reset --hard ${{ github.sha }}
+
+      - name: Semantic Version Release
+        id: release
+        uses: python-semantic-release/python-semantic-release@v10.6.1
+        with:
+          directory: services/research-agent
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          git_committer_name: "github-actions"
+          git_committer_email: "actions@users.noreply.github.com"
+
+      - name: Publish artifacts to GitHub Release
+        uses: python-semantic-release/publish-action@v10.6.1
+        if: steps.release.outputs.released == 'true'
+        with:
+          directory: services/research-agent
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ steps.release.outputs.tag }}
+
+      - name: Upload distribution artifacts
+        if: steps.release.outputs.released == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: research-agent-dist
+          path: services/research-agent/dist
+          if-no-files-found: error
+
+    outputs:
+      released: ${{ steps.release.outputs.released || 'false' }}
+      version: ${{ steps.release.outputs.version }}
