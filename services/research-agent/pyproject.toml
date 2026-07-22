@@ -1,4 +1,9 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
 [project]
+
 name = "research-agent"
 version = "0.1.0"
 description = "CEREBRUM Research Agent service"
@@ -35,6 +40,7 @@ source = ["src"]
 omit = [
     "*/tests/*",
     "*/__init__.py",
+    "*/main.py",
 ]
 
 [tool.coverage.report]
