@@ -54,4 +54,4 @@ storage/artifacts/*
 
 # Temporary
 tmp/
-cache/
+cache/coverage.xml
