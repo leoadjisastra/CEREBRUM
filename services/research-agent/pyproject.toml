@@ -57,6 +57,7 @@ commit_parser = "conventional"
 tag_format = "research-agent-v{version}"
 major_on_zero = false
 allow_zero_version = true
+build_command = "uv-build"
 version_toml = [
     "pyproject.toml:project.version"
 ]
