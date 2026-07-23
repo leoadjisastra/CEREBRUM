@@ -61,17 +61,17 @@ Semua repository menggunakan Conventional Commits.
 | test | No bump |
 
 Dokumen lengkap terdapat pada:
-
+```
 COMMIT_CONVENTION.md
-
+```
 
 ---
 
 ## 2. Release Tool
 Dipilih:
-
+```
 python-semantic-release v10
-
+```
 karena mampu melakukan otomatis:
 - Version bump
 - Git Tag
@@ -87,11 +87,11 @@ tanpa proses manual.
 Setiap service memiliki workflow release sendiri.
 
 Contoh:
-
+```
 .github/workflows/release-research-agent.yml
 .github/workflows/release-memory-agent.yml
 .github/workflows/release-analyst-agent.yml
-
+```
 
 Workflow hanya dijalankan apabila folder service tersebut berubah.
 
@@ -124,21 +124,21 @@ Bukan root repository.
 
 ## 5. Tag Format per Service
 Tag tidak menggunakan:
-
+```
 v0.1.0
-
+```
 melainkan:
 ```toml
 tag_format = "research-agent-v{version}"
 ```
 
 Contoh hasil:
-
+```
 research-agent-v0.1.0
 research-agent-v0.1.1
 memory-agent-v0.1.0
 analyst-agent-v0.1.0
-
+```
 
 Keputusan ini mencegah konflik tag antar service.
 
@@ -154,9 +154,9 @@ major_on_zero = false
 Alasan: Research Agent masih experimental, belum layak dianggap API stabil.
 
 Versi akan berkembang seperti:
-
+```
 0.1.0 → 0.1.1 → 0.2.0 → 0.3.0 → ... → 1.0.0
-
+```
 Bukan langsung `0.1.0 → 1.0.0`. Kesalahan ini sempat terjadi saat implementasi dan sudah diperbaiki.
 
 ---
@@ -192,9 +192,9 @@ Masalah ini ditemukan saat implementasi Research Agent.
 
 ## 9. Coverage Gate
 Coverage minimum:
-
+```
 85%
-
+```
 Job `test` pada workflow release tidak akan lanjut ke job `release` apabila coverage gagal.
 
 CLI entrypoint seperti `main.py` dikeluarkan dari coverage karena hanya berisi argparse, exit code, dan print — tanpa business logic. Business logic yang memanggil service eksternal (misalnya provider API) tetap wajib memiliki coverage, tidak boleh di-omit.
@@ -204,26 +204,27 @@ CLI entrypoint seperti `main.py` dikeluarkan dari coverage karena hanya berisi a
 ## 10. Release Pipeline
 Pipeline release final, seluruhnya di dalam satu workflow `release-research-agent.yml`:
 
+```
 Push ke main (paths: services/research-agent/**)
-│
-▼
+        │
+        ▼
 Job "test"
-
-uv sync
-pytest + coverage (fail-under 85%)
-│
-▼
+  - uv sync
+  - pytest + coverage (fail-under 85%)
+        │
+        ▼
 PASS
-│
-▼
+        │
+        ▼
 Job "release" (needs: test)
-Semantic Release: version bump + Git Tag + CHANGELOG
-│
-▼
-Build (pip install build && python -m build)
-│
-▼
-GitHub Release + Upload Artifact
+  - Semantic Release: version bump + Git Tag + CHANGELOG
+        │
+        ▼
+  - Build (pip install build && python -m build)
+        │
+        ▼
+  - GitHub Release + Upload Artifact
+```
 
 Release tidak pernah dijalankan apabila job `test` gagal.
 
@@ -233,11 +234,11 @@ Catatan: repo juga memiliki workflow terpisah `Research Agent CI` dari fase sebe
 
 ## 11. Artifact Strategy
 Distribusi package menghasilkan:
-
+```
 dist/
 ├── research_agent-0.x.x.tar.gz
 └── research_agent-0.x.x-py3-none-any.whl
-
+```
 
 Artifact:
 - di-attach ke GitHub Release
@@ -251,11 +252,11 @@ Publish ke PyPI **belum dilakukan**.
 Setiap service mempunyai workflow sendiri, tag sendiri, version sendiri, changelog sendiri.
 
 Contoh:
-
-Research Agent → research-agent-v0.2.0
-Memory Agent → memory-agent-v0.1.0
-Analyst Agent → analyst-agent-v0.1.0
-
+```
+Research Agent  → research-agent-v0.2.0
+Memory Agent    → memory-agent-v0.1.0
+Analyst Agent   → analyst-agent-v0.1.0
+```
 
 Tidak ada dependency release antar service.
 
@@ -314,8 +315,8 @@ Status implementasi saat ADR ini ditulis:
 - ✅ Monorepo-ready release architecture
 
 Research Agent telah berhasil melakukan release otomatis dengan tag:
-
+```
 research-agent-v0.1.0
 research-agent-v0.1.1
-
+```
 yang dihasilkan sepenuhnya melalui GitHub Actions tanpa proses manual.
