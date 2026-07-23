@@ -32,7 +32,7 @@ dev = [
     "pytest-cov>=7.1.0",
     "ruff>=0.15.21",
     "mypy>=2.3.0",
-    "pre-commit>=4.6.0",
+    "pre-commit>=4.6.1",
     "python-semantic-release>=10.6.1",
 ]
 [tool.coverage.run]
