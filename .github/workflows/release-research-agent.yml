@@ -63,7 +63,7 @@ jobs:
           git_committer_email: "actions@users.noreply.github.com"
 
       - name: Publish artifacts to GitHub Release
-        uses: python-semantic-release/publish-action@v10.6.1
+        uses: python-semantic-release/publish-action@v10.6.2
         if: steps.release.outputs.released == 'true'
         with:
           directory: services/research-agent
